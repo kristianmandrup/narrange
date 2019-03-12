@@ -1,0 +1,16 @@
+{
+  "name": "narrange",
+  "version": "1.0.0",
+  "description": "NArrange for use in Node.js scripts",
+  "main": "index.js",
+  "keywords": [
+    "NArrange",
+    "NET",
+    "format",
+    "arrange",
+    "prettify",
+    "beautify"
+  ],
+  "author": "Kristian Mandrup",
+  "license": "ISC"
+}
