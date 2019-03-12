@@ -1,6 +1,6 @@
 {
   "name": "narrange",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "NArrange for use in Node.js scripts",
   "main": "index.js",
   "keywords": [

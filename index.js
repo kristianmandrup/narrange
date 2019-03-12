@@ -1,4 +1,5 @@
 const exec = require("child_process").exec;
+const path = require("path");
 
 const silent = {
   out: process.env.NARRANGE_SILENT_OUT,
@@ -12,10 +13,17 @@ const defaults = {
   silent
 };
 
+const rootPath = __dirname;
+const libPath = path.join(rootPath, "lib");
+const configPath = path.join(rootPath, "config");
+const exeFilePath = path.join(rootPath, "lib/narrange.exe");
+
 const paths = {
-  configFile: defaults.configFilePath || "config/NArrange-Config.xml",
+  configFile: defaults.configFilePath || "config/narrange.xml",
   src: defaults.srcPath || "src",
-  exe: `${__dirname}/node_modules/narrange/lib/narrange.exe`
+  exe: exeFilePath,
+  config: configPath,
+  lib: libPath
 };
 
 const error = (msg, { silent } = {}) => {

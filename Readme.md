@@ -10,36 +10,11 @@
 
 From your node.js script, execute `narrange.exe` in a childprocess (Windows or using [Mono](https://www.mono-project.com/) for non-Windows).
 
-```js
-const exec = require("child_process").exec;
-
-const configFilePath = `config/NArrange-Config.xml`;
-
-const exePath = `${__dirname}/node_modules/narrange/lib/narrange.exe`;
-const narrange = exec(`${exePath} src /c:${configFilePath}`, function(
-  err,
-  stdout,
-  stderr
-) {
-  if (err) {
-    console.log(stderr);
-    // should have err.code here?
-  }
-  console.log(stdout);
-});
-
-narrange.on("exit", function(code) {
-  // exit code is code
-  console.log(`EXIT: ${code}`);
-});
-```
-
-## Default implementation
-
-A default implementation is included and can be used as follows:
+Example:
 
 ```js
-import { createNArrange } from "narrange";
+const { createNArrange } = require("narrange");
+const path = require("path");
 
 createNArrange({
   srcPath: path.join(__dirname, "src/apps/mango"),
@@ -81,11 +56,15 @@ Run `npm install` from your Terminal to install dependencies: `husky` and `narra
 Create a Node script `format-csharp.js` that runs `narrange.exe` on your source files using
 a config file with your specific preferences.
 
-```js
-import { createNArrange } from "narrange";
+Assuming we put the script in a `/scripts` folder in the project root
 
-const srcPath = path.join(__dirname, "src/apps/mango")
-const configFilePath = path.join(__dirname, "config/NArrange.xml")
+```js
+const { createNArrange } = require("narrange");
+const path = require("path");
+
+const rootPath = path.join(__dirname, "../");
+const srcPath = path.join(rootPath, "Areas")
+const configFilePath = path.join(rootPath, "config/NArrange.xml")
 
 createNArrange({
   srcPath
@@ -101,12 +80,16 @@ configuration files
 - `config/Tabs4.xml` converts 4 spaces to 1 tab
 - `config/Tabs2.xml` converts 2 spaces to 1 tab
 
+Assuming we put the script in a `/scripts` folder in the project root
+
 ```js
-const narrangeHomePath = path.join(__dirname, "node_modules/narrange");
+const path = require("path");
+const rootPath = path.join(__dirname, "../");
+const narrangeHomePath = path.join(rootPath, "node_modules/narrange");
 const narrangeConfigPath = path.join(narrangeHomePath, "config");
 // const narrangeLibPath = path.join(narrangeHomePath, "lib");
 
-const configFilePath = path.join(narrangeConfigPath, "Tabs4.xml")`
+const configFilePath = path.join(narrangeConfigPath, "Tabs4.xml")s
 ```
 
 #### Formatting
@@ -147,6 +130,9 @@ Note that all these options are optional. If any option is left out, a default v
 Custom narrange setup example :
 
 ```js
+const { createNArrange } = require("narrange");
+const path = require("path");
+
 const createMainHandler = (opts = {}) => {
   return (err, stdout, stderr) => {
     // ..
