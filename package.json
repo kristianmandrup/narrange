@@ -11,6 +11,14 @@
     "prettify",
     "beautify"
   ],
-  "author": "Kristian Mandrup",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristianmandrup/narrange.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kristianmandrup/narrange/issues",
+    "email": "kmandrup@gmail.com"
+  },
+  "author": "Kristian Mandrup <kmandrup@gmail.com>",
   "license": "ISC"
 }
