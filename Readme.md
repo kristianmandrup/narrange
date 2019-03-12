@@ -1,5 +1,7 @@
 # NArrange
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/kristianmandrup/narrange.svg)](https://greenkeeper.io/)
+
 [NArrange](http://www.narrange.net/) is a .NET code beautifier that automatically organizes code members and elements within .NET classes.
 
 ## Install
