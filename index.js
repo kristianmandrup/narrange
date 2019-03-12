@@ -1,5 +1,6 @@
 const exec = require("child_process").exec;
 const path = require("path");
+var fs = require("fs");
 
 const silent = {
   out: process.env.NARRANGE_SILENT_OUT,
@@ -20,10 +21,12 @@ const exeFilePath = path.join(rootPath, "lib/narrange.exe");
 
 const paths = {
   configFile: defaults.configFilePath || "config/narrange.xml",
-  src: defaults.srcPath || "src",
-  exe: exeFilePath,
-  config: configPath,
-  lib: libPath
+  src: defaults.srcPath || ".",
+  narrange: {
+    exe: exeFilePath,
+    config: configPath,
+    lib: libPath
+  }
 };
 
 const error = (msg, { silent } = {}) => {
@@ -109,6 +112,18 @@ const factories = {
 defaults.mainHandler = mainHandler;
 defaults.exitHandler = exitHandler;
 
+const pathExists = fullPath => {
+  return fs.existsSync(fullPath);
+};
+
+const narrangeConfigFilePathFor = (opts = {}) => {
+  if (opts.tabs) {
+    return path.join(paths.narrange.config, `Tabs${tabs}.xml`);
+  }
+  // expect narrange to use default strategy if empty
+  return "";
+};
+
 const createNArrange = (opts = {}) => {
   const createExitHandler =
     opts.createExitHandler || factories.createExitHandler;
@@ -122,6 +137,11 @@ const createNArrange = (opts = {}) => {
   const srcPath = opts.srcPath || paths.src;
   const configFilePath =
     opts.configFilePath || opts.configPath || paths.configFile;
+
+  if (!pathExists(configFilePath)) {
+    configFilePath = narrangeConfigFilePathFor(opts);
+  }
+
   const exePath = opts.exePath || paths.exe;
 
   const narrange = exec(

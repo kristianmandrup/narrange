@@ -108,7 +108,16 @@ To create your own formatting rules, by specifying your own rules in the `<Forma
 
 Note that you can use the `narrange-config.exe` to edit a configuration file using a GUI, which ensures you can only populate it with valid values.
 
-For more details, see [./Format-CSharp.md]
+#### Simple tabs formatting configuration
+
+Simple configuration to force 2 spaces to be converted to a tab:
+
+```js
+createNArrange({
+  srcPath: path.join(__dirname, "src/apps/mango"),
+  tabs: 2 // use instead of configFilePath to select built in Tabs config file
+});
+```
 
 ## createNArrange
 
@@ -118,12 +127,13 @@ The function `createNArrange` creates a child process which executes the `narran
 - `onError` custom stderr handler function
 - `onOut` custom stdout handler function
 - `createMainHandler` factory method to create main handler
-- `createExitHandler`
-- `exitHandler` exit handler function (precedence over factory)
-- `mainHandler` main handler function (precedence over factory)
+- `createExitHandler` factory method to create process exit handler
+- `exitHandler` process exit handler function (takes precedence over factory)
+- `mainHandler` main handler function (takes precedence over factory)
 - `srcPath` path to input folder for narrange (location folder of source files to process)
 - `configFilePath` path to narrange config file
 - `exePath` path to narrange exe to override version available in this module
+- `tabs` spaces count to tabs used in formatting (used to select built in Tabs config file) - `2` or `4`
 
 Note that all these options are optional. If any option is left out, a default value is used.
 
@@ -151,7 +161,8 @@ createNArrange({
   configFilePath: path.join(__dirname, "config/NArrange.xml"),
   createMainHandler,
   onOut,
-  onError
+  onError,
+  // tabs: 2 // use instead of configFilePath to select built in Tabs config file
 });
 ```
 
@@ -159,18 +170,67 @@ createNArrange({
 
 `narrange` exports the following "building blocks":
 
-```
-exitHandler,
-mainHandler,
-createMainHandler,
-createExitHandler,
-info,
-error,
-defaults,
-paths
-```
+- `exitHandler` function
+- `mainHandler` function
+- `createMainHandler` factory function
+- `createExitHandler` factory function
+- `info` function
+- `error` function
+- `defaults` config object
+- `paths` config object
 
 This should make it easy to build a custom narrange solution to suit your needs.
+
+## More resources
+
+- [Stack Overflow: Is there a pretty printer / code formatter for C# (as part of build system)?](https://stackoverflow.com/questions/13089911/is-there-a-pretty-printer-code-formatter-for-c-sharp-as-part-of-build-system)
+
+### Recipes
+
+- [Arranging C# project files](http://schmalls.com/2015/01/01/arranging-csproj-files)
+- [.NET Source code formatting guide](https://haacked.com/archive/2011/05/22/an-obsessive-compulsive-guide-to-source-code-formatting.aspx/)
+
+[gits: PowerShell - Recurse Project](https://gist.github.com/davidfowl/984358#file-projectitem-recursion)
+
+`Format-Document` PowerShell function which leverages `Recurse-Project` and automates calling into Visual Studio’s Format Document command.
+
+```bash
+function Format-Document {
+  param(
+    [parameter(ValueFromPipelineByPropertyName = $true)]
+    [string[]]$ProjectName
+  )
+  Process {
+    $ProjectName | %{
+      Recurse-Project -ProjectName $_ -Action
+      {
+        param($item)
+        if($item.Type -eq 'Folder' -or !$item.Language)
+        {
+          return
+        }
+        $win = $item.ProjectItem.Open('{7651A701-06E5-11D1-8EBD-00A0C90F26EA}')
+        if ($win)
+        {
+          Write-Host "Processing `"$($item.ProjectItem.Name)`"" [System.Threading.Thread]::Sleep(100) $win.Activate() $item.ProjectItem.Document.DTE.ExecuteCommand('Edit.FormatDocument') $item.ProjectItem.Document.DTE.ExecuteCommand('Edit.RemoveAndSort') $win.Close(1)
+        }
+      }
+    }
+  }
+}
+```
+
+`Format-Document` can be configured for Visual Studio and used to run your existing Format Document command on a subset of project files, using recurse project to iterate and select the files to be processed.
+
+### Extensions
+
+- [VS extension: FormatAllFiles](https://marketplace.visualstudio.com/items?itemName=munyabe.FormatAllFiles)
+- [VS extension: NArrangeVS](https://marketplace.visualstudio.com/items?itemName=jthompson-miratech.NArrangeVS)
+- [Code formatter](https://github.com/dotnet/codeformatter) (based on Roslyn)
+
+## More docs
+
+See [./Format-CSharp.md] for more details on using narrange directly.
 
 ## License
 
