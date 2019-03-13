@@ -2,6 +2,10 @@ const exec = require("child_process").exec;
 const path = require("path");
 var fs = require("fs");
 
+const isFunction = fun => {
+  return typeof fun == "function";
+};
+
 const silent = {
   out: process.env.NARRANGE_SILENT_OUT,
   err: process.env.NARRANGE_SILENT_ERR,
@@ -29,35 +33,57 @@ const paths = {
   }
 };
 
-const error = (msg, { silent } = {}) => {
-  silent = silent || defaults.silent;
-  if (silent.err) return;
-  console.error(msg);
-};
+const createWriters = (opts = {}) => {
+  let { silent, writer, debugOn } = opts;
+  silent = silent || defaults.silent || {};
+  writer = writer || console;
 
-const info = (msg, { silent } = {}) => {
-  silent = silent || defaults.silent;
-  if (silent.out) return;
-  console.log(msg);
+  const error = msg => {
+    if (silent.err) return;
+    if (isFunction(writer.error)) {
+      writer.error(msg);
+    }
+  };
+
+  const info = msg => {
+    if (silent.out) return;
+    if (isFunction(writer.log)) {
+      writer.log(msg);
+    }
+  };
+
+  const debug = msg => {
+    if (!debugOn) return;
+    if (isFunction(writer.log)) {
+      writer.log(msg);
+    }
+  };
+
+  return {
+    error,
+    info,
+    debug
+  };
 };
 
 const mainHandler = (err, stdout, stderr) => {
   if (err) {
-    error(stderr);
+    console.error(stderr);
     // should have err.code here?
   }
-  info(stdout);
+  console.log(stdout);
 };
 
 const createMainHandler = (opts = {}) => {
-  const { onError, onOut, silent } = opts;
+  const { onError, onOut } = opts;
+  const { error, info } = createWriters(opts);
 
   return (err, stdout, stderr) => {
     if (err) {
       if (onError) {
         onError(stderr);
       } else {
-        error(stderr, { silent });
+        error(stderr);
       }
 
       // should have err.code here?
@@ -65,12 +91,12 @@ const createMainHandler = (opts = {}) => {
     if (onOut) {
       onOut(stdout);
     } else {
-      info(stdout, { silent });
+      info(stdout);
     }
   };
 };
 
-const exitHandler = code => {
+const exitHandler = (code, silent = {}) => {
   if (silent.exit) return;
   if (code !== 0) {
     error("narrange error");
@@ -82,10 +108,12 @@ const exitHandler = code => {
 };
 
 const createExitHandler = (opts = {}) => {
-  const { onExitError, onExitSuccess, silent } = opts;
+  const { onExitError, onExitSuccess, done, silent = {} } = opts;
+  const { error } = createWriters(opts);
 
   return code => {
     if (silent.exit) return;
+
     if (code !== 0) {
       if (onExitError) {
         onError();
@@ -100,6 +128,10 @@ const createExitHandler = (opts = {}) => {
       } else {
         error("narrange success", { silent });
       }
+    }
+
+    if (isFunction(done)) {
+      done(code);
     }
   };
 };
@@ -124,6 +156,24 @@ const narrangeConfigFilePathFor = (opts = {}) => {
   return "";
 };
 
+const getConfigFilePath = (opts, paths) => {
+  let configFilePath =
+    opts.configFilePath || opts.configPath || paths.configFile;
+
+  if (!pathExists(configFilePath)) {
+    configFilePath = narrangeConfigFilePathFor(opts);
+  }
+  return configFilePath;
+};
+
+const isNothing = obj => {
+  return obj === undefined || obj === null;
+};
+
+const notEmptyStr = obj => {
+  return !isNothing(obj) && obj.trim() !== "";
+};
+
 const createNArrange = (opts = {}) => {
   const createExitHandler =
     opts.createExitHandler || factories.createExitHandler;
@@ -135,20 +185,41 @@ const createNArrange = (opts = {}) => {
   const mainHandler = opts.mainHandler || createMainHandler(opts);
 
   const srcPath = opts.srcPath || paths.src;
-  const configFilePath =
-    opts.configFilePath || opts.configPath || paths.configFile;
+  const configFilePath = getConfigFilePath(opts, paths);
 
-  if (!pathExists(configFilePath)) {
-    configFilePath = narrangeConfigFilePathFor(opts);
-  }
+  const exePath = opts.exePath || paths.narrange.exe;
 
-  const exePath = opts.exePath || paths.exe;
+  const { debug } = createWriters(opts);
 
-  const narrange = exec(
-    `${exePath} ${srcPath} /c:${configFilePath}`,
-    mainHandler
-  );
-  narrange.on("exit", exitHandler);
+  const ctx = {
+    paths: {
+      exe: exePath,
+      config: configFilePath,
+      src: srcPath
+    },
+    handlers: {
+      main: mainHandler,
+      exit: exitHandler
+    }
+  };
+
+  debug({ ctx });
+
+  const narrange = () => {
+    const configArg = notEmptyStr(configFilePath) ? `/c:${configFilePath}` : "";
+    const command = `${exePath} ${srcPath} ${configArg}`;
+
+    debug({ command });
+
+    const childProcess = exec(command, mainHandler);
+    childProcess.on("exit", exitHandler);
+    return childProcess;
+  };
+
+  return {
+    narrange,
+    ctx
+  };
 };
 
 module.exports = {
@@ -157,8 +228,7 @@ module.exports = {
   mainHandler,
   createMainHandler,
   createExitHandler,
-  info,
-  error,
+  createWriters,
   defaults,
   paths
 };

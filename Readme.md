@@ -2,25 +2,38 @@
 
 [NArrange](http://www.narrange.net/) is a .NET code beautifier that automatically organizes code members and elements within .NET classes.
 
+_NArrange_ executes a Windows `.exe` executable (as a child process) and thus only works on a Windows environment.
+
 ## Install
 
-`npm install narrange`
+Install as a (dev) package dependency:
 
-## Usage
+`npm install narrange -D`
 
-From your node.js script, execute `narrange.exe` in a childprocess (Windows or using [Mono](https://www.mono-project.com/) for non-Windows).
+## Quick start
 
-Example:
+From your node.js script, execute `narrange.exe` in a child process
 
 ```js
 const { createNArrange } = require("narrange");
 const path = require("path");
 
-createNArrange({
+const { narrange, ctx } = createNArrange({
   srcPath: path.join(__dirname, "src/apps/mango"),
   configFilePath: path.join(__dirname, "config/NArrange.xml")
+  // set debug mode
+  // debugOn: true
 });
+
+console.log(ctx);
+
+narrange();
 ```
+
+Note that the factory method `createNArrange` returns both `narrange` and a `ctx` context object.
+Look at the `ctx` object to ensure you have configured narrange correctly.
+
+During experimentation, pass `debugOn: true` as an option to `createNArrange`
 
 ## Pre-commit hooks
 
@@ -66,10 +79,12 @@ const rootPath = path.join(__dirname, "../");
 const srcPath = path.join(rootPath, "Areas")
 const configFilePath = path.join(rootPath, "config/NArrange.xml")
 
-createNArrange({
+const { narrange } = createNArrange({
   srcPath
   configFilePath
 });
+
+narrange();
 ```
 
 ### Tabs configuration
@@ -113,10 +128,11 @@ Note that you can use the `narrange-config.exe` to edit a configuration file usi
 Simple configuration to force 2 spaces to be converted to a tab:
 
 ```js
-createNArrange({
+const { narrange } = createNArrange({
   srcPath: path.join(__dirname, "src/apps/mango"),
-  tabs: 2 // use instead of configFilePath to select built in Tabs config file
+  tabs: 4 // use instead of configFilePath to select built in Tabs config file
 });
+narrange();
 ```
 
 ## createNArrange
@@ -134,6 +150,7 @@ The function `createNArrange` creates a child process which executes the `narran
 - `configFilePath` path to narrange config file
 - `exePath` path to narrange exe to override version available in this module
 - `tabs` spaces count to tabs used in formatting (used to select built in Tabs config file) - `2` or `4`
+- `debugOn` turn debug mode on or off (default: false)
 
 Note that all these options are optional. If any option is left out, a default value is used.
 
@@ -156,7 +173,7 @@ const onError = (err) {
   console.error(err);
 }
 
-createNArrange({
+const { narrange } = createNArrange({
   srcPath: path.join(__dirname, "src/apps/mango"),
   configFilePath: path.join(__dirname, "config/NArrange.xml"),
   createMainHandler,
@@ -164,6 +181,7 @@ createNArrange({
   onError,
   // tabs: 2 // use instead of configFilePath to select built in Tabs config file
 });
+narrange();
 ```
 
 #### Exports
@@ -174,12 +192,64 @@ createNArrange({
 - `mainHandler` function
 - `createMainHandler` factory function
 - `createExitHandler` factory function
-- `info` function
-- `error` function
+- `createWriters` function to create info, error, and debug functions
 - `defaults` config object
 - `paths` config object
 
 This should make it easy to build a custom narrange solution to suit your needs.
+
+## Full script example
+
+The following example uses [minimist](https://www.npmjs.com/package/minimist) to parse process args passed from shell.
+
+```js
+const path = require("path");
+const minimist = require('minimist');
+const { createNArrange } = require("narrange");
+const processArgs = process.argv.slice(2);
+const opts = {
+  alias: {
+    h: 'help',
+    s: 'src',
+    t: 'tabs'
+  }
+};
+
+// args is an object, with key for each named argument
+const args = minimist(processArgs, opts);
+const defaults = {
+  srcFolder: "./",
+  tabs: 4
+}
+if (args.help) {
+  console.log(`
+format-cs
+---------
+  -s src folder (default: ./ )
+  -t spaces per tab (default: 4)
+`)
+  process.exit(0);
+}
+const srcFolder = args.src || defaults.srcFolders;
+const tabs = args.tabs || defaults.tabs;
+const rootPath = path.join(__dirname, "..");
+const srcPath = path.join(rootPath, srcFolder),
+
+createNArrange({
+  srcPath,
+  tabs
+});
+```
+
+## Tests
+
+You can run some basic tests using [jest](https://jestjs.io)
+
+```bash
+$ npm test
+```
+
+Note that the executable `narrange.exe` can only be executed on a Windows (perhaps also using Mono?) platform.
 
 ## More resources
 

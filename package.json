@@ -1,15 +1,25 @@
 {
   "name": "narrange",
-  "version": "1.0.3",
-  "description": "NArrange for use in Node.js scripts",
+  "version": "1.0.4",
+  "description": "NArrange for use in Node.js scripts to format and arrange C# code",
   "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
   "keywords": [
     "NArrange",
     "NET",
+    ".NET",
+    "microsoft",
+    "windows",
+    "script",
     "format",
     "arrange",
     "prettify",
-    "beautify"
+    "beautify",
+    "csharp",
+    "c#",
+    "vb"
   ],
   "repository": {
     "type": "git",
@@ -20,5 +30,9 @@
     "email": "kmandrup@gmail.com"
   },
   "author": "Kristian Mandrup <kmandrup@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^24.5.0",
+    "mock-fs": "^4.8.0"
+  }
 }
