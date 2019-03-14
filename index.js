@@ -141,6 +141,13 @@ const factories = {
   createExitHandler
 };
 
+const createCommand = (exePath, srcPath, opts = {}) => {
+  const configArg = opts.config || "";
+  return `${exePath} ${srcPath} ${configArg}`;
+};
+
+defaults.createCommand = createCommand;
+defaults.createWriters = createWriters;
 defaults.mainHandler = mainHandler;
 defaults.exitHandler = exitHandler;
 
@@ -149,14 +156,15 @@ const pathExists = fullPath => {
 };
 
 const narrangeConfigFilePathFor = (opts = {}) => {
-  if (opts.tabs) {
+  const { tabs } = opts;
+  if (tabs) {
     return path.join(paths.narrange.config, `Tabs${tabs}.xml`);
   }
   // expect narrange to use default strategy if empty
   return "";
 };
 
-const getConfigFilePath = (opts, paths) => {
+const getConfigFilePath = (opts = {}, paths = {}) => {
   let configFilePath =
     opts.configFilePath || opts.configPath || paths.configFile;
 
@@ -188,10 +196,24 @@ const createNArrange = (opts = {}) => {
   const configFilePath = getConfigFilePath(opts, paths);
 
   const exePath = opts.exePath || paths.narrange.exe;
+  const createWriters = opts.createWriters || defaults.createWriters;
 
   const { debug } = createWriters(opts);
 
+  const configArg = notEmptyStr(configFilePath) ? `/c:${configFilePath}` : "";
+
+  const createCommand = opts.createCommand || defaults.createCommand;
+  const command = createCommand(exePath, srcPath, { config: configArg });
+
   const ctx = {
+    command: {
+      full: command,
+      exe: exePath,
+      args: {
+        config: configArg,
+        src: srcPath
+      }
+    },
     paths: {
       exe: exePath,
       config: configFilePath,
@@ -206,9 +228,6 @@ const createNArrange = (opts = {}) => {
   debug({ ctx });
 
   const narrange = () => {
-    const configArg = notEmptyStr(configFilePath) ? `/c:${configFilePath}` : "";
-    const command = `${exePath} ${srcPath} ${configArg}`;
-
     debug({ command });
 
     const childProcess = exec(command, mainHandler);

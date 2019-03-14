@@ -144,6 +144,8 @@ The function `createNArrange` creates a child process which executes the `narran
 - `onOut` custom stdout handler function
 - `createMainHandler` factory method to create main handler
 - `createExitHandler` factory method to create process exit handler
+- `createWriters` factory method to create writers (error, info, debug methods)
+- `createCommand` factory method to create the command to execute in the child process
 - `exitHandler` process exit handler function (takes precedence over factory)
 - `mainHandler` main handler function (takes precedence over factory)
 - `srcPath` path to input folder for narrange (location folder of source files to process)
